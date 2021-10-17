@@ -1,6 +1,11 @@
-# Minimal React Boilerplate
+# Cleaner React Boilerplate
 
-React 컴포넌트를 렌더링할 수 있는 최소한의 설정으로 구성된 보일러플레이트.
+React 컴포넌트를 렌더링할 수 있는 최소한의 설정으로 구성된 보일러플레이트
+
+- Webpack
+- Babel
+- React
+- ESLint + Prettier
 
 ## 튜토리얼
 
