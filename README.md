@@ -61,6 +61,9 @@ module.exports = {
   output: {
     filename: "bundle.[fullhash].js",
   },
+  resolve: {
+    extensions: [".js", ".jsx"],
+  },
 };
 ```
 
@@ -70,6 +73,8 @@ module.exports = {
 - `entry`: 어플리케이션 진입점을 설정.
 - `output`: 번들된 파일을 저장할 경로 설정.
   - `filename`: 번들된 파일의 이름 설정. `[fullhash]`는 웹팩에서 생성한 해시를 사용한다.
+- `resolve`: 모듈을 해석하는 방식을 설정한다.
+  - `extensions`: 명시하는 확장자를 순서대로 해석한다. 사용자가 `import`할 때 확장자를 생략할 수 있도록 해준다. (default 설정은 jsx를 명시하지 않아 오류가 발생한다.)
 
 --
 
@@ -95,7 +100,7 @@ module: {
 --
 
 ```bash
-npm i -D babel-loader html-loader
+$ npm i -D babel-loader html-loader
 ```
 
 - `babel-loader`: 바벨을 웹팩에서 사용할 수 있도록 해준다.
@@ -252,4 +257,117 @@ export default App;
 ```
 
 - 정상적으로 결과물이 빌드되는지 확인할 수 있도록 파일을 간단히 작성한다.
+
+--
+
+### ESLint & Prettier 설정
+
+> ESLint와 Prettier 같이 사용하기
+>
+> - 기본적으로 ESLint는 코드 퀄리티에, Prettier는 코드 포맷팅에 특화되어 있지만 ESLint는 코드 포맷팅과 관련된 rule 또한 일부 포함한다.
+> - 이로 인해 별도의 조치 없이 ESLint와 Prettier를 함께 사용하면, ESLint와 Prettier의 rule이 서로 충돌하는 상황이 발생한다.
+> - 이러한 상황에 대응하기 위한 일반적인 솔루션으로 크게 3가지가 있다: `prettier-eslint`, `eslint-plugin-prettier`, `eslint-config-prettier`
+>
+> 1. `prettier-eslint`: prettier를 실행하고 난 후의 코드를 eslint로 fix하는 npm 라이브러리. prettier를 단독으로 실행하는 것보다 훨씬 느리다는 단점이 있다. (`prettier-eslint`의 메인테이너가 2017년에 해당 패키지를 더 이상 사용하지 않는다고 밝혔다.)
+> 2. `eslint-plugin-eslint`: prettier를 eslint의 rule로써 동작하게 만든다. 속도가 느리며, 포맷팅 문제가 eslint 오류로 인식되어 오류 메시지가 지나치게 많아진다는 단점이 있다.
+> 3. `eslint-config-prettier`(권장) eslint의 rule 중 prettier와 충돌할 수 있는 rule을 모두 비활성화한다. 속도가 가장 빠르고, ESLint는 코드 퀄리티만을, Prettier는 코드 포맷팅만을 담당하도록 관심사를 분리할 수 있기 때문에 권장되는 방법이다. (Kent C. Dodds도 이 방법을 사용하는 것이 낫다고 밝혔다.)
+
+—
+
+```bash
+$ npm i -D eslint prettier eslint-config-prettier
+$ npx eslint --init
+```
+
+- 관련 모듈을 설치한 후, eslint 프로젝트 초기 설정을 시작한다.
+
+—
+
+```
+✔ How would you like to use ESLint? · style
+✔ What type of modules does your project use? · esm
+✔ Which framework does your project use? · react
+✔ Does your project use TypeScript? · No / Yes
+✔ Where does your code run? · browser
+✔ How would you like to define a style for your project? · guide
+✔ Which style guide do you want to follow? · airbnb
+✔ What format do you want your config file to be in? · JavaScript
+```
+
+- ESLint 설정을 위해 필요한 질문들에 원하는 대로 답변한다.
+
+—
+
+```
+eslint-plugin-react@^7.21.5 eslint-config-airbnb@latest eslint@^5.16.0 || ^6.8.0 || ^7.2.0 eslint-plugin-import@^2.22.1 eslint-plugin-jsx-a11y@^6.4.1 eslint-plugin-react-hooks@^4 || ^3 || ^2.3.0 || ^1.7.0
+✔ Would you like to install them now with npm? · No / Yes
+```
+
+- 선택한 ESLint rule(airbnb)에 필요한 모듈을 자동으로 설치해준다.
+
+—
+
+```jsx
+module.exports = {
+  env: {
+    browser: true,
+    es2021: true,
+  },
+  extends: ["plugin:react/recommended", "airbnb"],
+  parserOptions: {
+    ecmaFeatures: {
+      jsx: true,
+    },
+    ecmaVersion: 11,
+    sourceType: "module",
+  },
+  plugins: ["react"],
+  rules: {},
+};
+```
+
+- 위와 같은 모습으로 초기 `.eslintrc.js` 파일이 생성된다.
+
+—
+
+```jsx
+// .eslintrc.js
+{
+  "extends": [
+		// ...
+    "prettier"
+  ]
+}
+```
+
+- `.eslintrc.js` 파일의 `extends`에 `"prettier"`를 추가해 `eslint-config-prettier` 모듈을 적용한다.
+
+—
+
+```jsx
+// package.json
+"scripts": {
+	// ...
+	"lint": "eslint \"src/**/*\" --fix",
+}
+```
+
+- `package.json` 파일의 `scripts`에 lint 명령어를 추가한다. 위 명령은 `src` 폴더 내의 모든 파일에 대해 lint 검사를 수행한다.
+
+—
+
+```json
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
+}
+```
+
+- 코드를 저장할 때 자동으로 prettier 포맷팅이 적용되도록 VS CODE의 `setting.json`을 설정한다.
+- ESLint rule 관련 경고줄이 보이지 않을 경우, VS CODE를 껐다 킨다.
+
+--
+
 - script 명령어 `$ npm start`로 테스트할 수 있다.
+
+FIN.
